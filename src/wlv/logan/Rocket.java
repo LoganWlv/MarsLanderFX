@@ -57,8 +57,8 @@ public class Rocket extends Point2D implements Printable {
 
     public ImageView print() {
         ImageView imageView = new ImageView("wlv/logan/resources/rocket.png");
-        imageView.setX(getX());
-        imageView.setY(getY());
+        imageView.setX(getX() - 32d);
+        imageView.setY(getY() - 64d);
         imageView.setFitWidth(64d);
         imageView.setFitHeight(64d);
         imageView.setRotate(angle);

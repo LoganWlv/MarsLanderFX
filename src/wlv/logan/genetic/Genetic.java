@@ -26,7 +26,7 @@ public class Genetic {
      */
 
     private final int POPULATION_SIZE = 100;
-    private final int NB_OF_GENES = 40;
+    private final int NB_OF_GENES = 10;
 
     public int currentGeneration = 0;
 
@@ -47,7 +47,7 @@ public class Genetic {
             gamePane.getChildren().addAll(individual.print());
         }
 
-        System.out.print("HEY");
+        System.out.println("Genetic process will start...");
 /*
         while (true) {
             //Fitness scaling if you have negative value - shift every values (min = -20, add 20 to every values)

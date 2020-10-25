@@ -26,7 +26,7 @@ public class Chromosome implements Printable {
     public Node print() {
         double[] points = PhysicUtils.computeRocketPositions(rocket, this);
         Polyline line = new Polyline(points);
-        line.setStroke(Color.BLUE);
+        line.setStroke(Color.GREENYELLOW);
         return line;
     }
 }

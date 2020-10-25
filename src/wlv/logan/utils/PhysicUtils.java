@@ -16,6 +16,8 @@ public class PhysicUtils {
         List<Double> nextPoints = new ArrayList<>();
 
         Rocket nextRocket = rocket.copy();
+        nextPoints.add(nextRocket.getX());
+        nextPoints.add(nextRocket.getY());
 
         for (Gene gene : individual.genes) {
             int nextFuel = nextRocket.getFuel() - gene.thrustPower;
@@ -24,11 +26,11 @@ public class PhysicUtils {
             double forceY = gene.thrustPower * Math.cos(Math.toRadians(nextAngle));
 
             double nextX = 2 * nextRocket.getX() - nextRocket.getLastX() - forceX;
-            double nextY = 2 * nextRocket.getY() - nextRocket.getLastY() - MarsFloor.GRAVITY + forceY;
+            double nextY = 2 * (1200 - nextRocket.getY()) - (1200 - nextRocket.getLastY()) - MarsFloor.GRAVITY + forceY;
             double nextSpeedX = nextRocket.getSpeedX() - forceX;
             double nextSpeedY = nextRocket.getSpeedY() - MarsFloor.GRAVITY + forceY;
 
-            nextRocket = new Rocket(nextX, nextY, nextAngle, gene.thrustPower, nextFuel, nextSpeedX, nextSpeedY, nextRocket.getX(), nextRocket.getLastY());
+            nextRocket = new Rocket(nextX, Math.abs(nextY - 1200), nextAngle, gene.thrustPower, nextFuel, nextSpeedX, nextSpeedY, nextRocket.getX(), nextRocket.getLastY());
             nextPoints.add(nextRocket.getX());
             nextPoints.add(nextRocket.getY());
         }
