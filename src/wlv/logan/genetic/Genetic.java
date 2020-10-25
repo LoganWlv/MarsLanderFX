@@ -1,58 +1,54 @@
-package wlv.logan;
+package wlv.logan.genetic;
 
+import wlv.logan.GamePane;
+import wlv.logan.utils.GeneUtils;
+
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
+import java.util.List;
 import java.util.Random;
 
 
-class Genetic {
+public class Genetic {
 
     /**
-     *
      * IN CASE OF CONTINOUS GA - change required at Initialize - Crossover - Mutation steps
-     *
+     * <p>
      * initialize random number in given interval
-     *
+     * <p>
      * cross over child1_i = Ri * Parent1_i + (1 - Ri) * Parent2_i
-     *            child2_i (1-Ri) * Parent1i + Bi * Parent2i
-     *
-     *
+     * child2_i (1-Ri) * Parent1i + Bi * Parent2i
+     * <p>
+     * <p>
      * mutation random number in given interval
-     *
      *
      * @param <T>
      */
 
+    private final int POPULATION_SIZE = 100;
+    private final int NB_OF_GENES = 40;
 
-    static class Chromosome<T> {
-        public T[] genes;
-        public Double fitnessValue;
-        public Double normalizedFitnessValue;
-        public Double cumulativeFitnessValue;
-
-        public Chromosome(T[] genes) {
-            this.genes = genes;
-        }
-    }
+    public int currentGeneration = 0;
 
 
-    public static void main(String[] args) {
-        Chromosome[] population = new Chromosome[20];
+    public void genetic(GamePane gamePane) {
+        List<Chromosome> population = new ArrayList<>();
         Random random = new Random();
 
         Double crossOverRatio = 0.75;
         Double mutationRatio = 0.20;
         Double elitismRatio = 0.5;
 
-        for (int i = 0; i < population.length; i++) {
-            Double[] genes = new Double[10];
-            for (int j = 0; j < genes.length; j++) {
-                genes[j] = (double) random.nextInt(10);
-            }
-            population[i] = new Chromosome<>(genes);
-            population[i].fitnessValue = fitness(genes);
+        for (int i = 0; i < POPULATION_SIZE; i++) {
+            population.add(new Chromosome(GeneUtils.generateGenes(NB_OF_GENES), gamePane.getRocket()));
         }
 
+        for(Chromosome individual : population) {
+            gamePane.getChildren().addAll(individual.print());
+        }
+
+        System.out.print("HEY");
+/*
         while (true) {
             //Fitness scaling if you have negative value - shift every values (min = -20, add 20 to every values)
 
@@ -164,15 +160,15 @@ class Genetic {
             System.out.println("**** END ****");
             population = nextPopulation;
         }
-
+*/
     }
 
     public static Double fitness(Double[] genes) {
         return Arrays.stream(genes).reduce(0.0, Double::sum);
     }
 
-    public static Chromosome<Double> copyChromosome(Chromosome<Double> c) {
-        Double[] genes = new Double[c.genes.length];
+    public static Chromosome copyChromosome(Chromosome c) {
+       /* Double[] genes = new Double[c.genes.length];
 
         for (int i = 0; i < genes.length; i++) {
             genes[i] = c.genes[i];
@@ -180,6 +176,7 @@ class Genetic {
 
         Chromosome copied = new Chromosome<>(genes);
         copied.fitnessValue = fitness(genes);
-        return copied;
+        return copied;*/
+        return null;
     }
 }
