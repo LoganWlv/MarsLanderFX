@@ -3,6 +3,9 @@ package wlv.logan;
 import javafx.geometry.Point2D;
 import javafx.scene.image.ImageView;
 
+import static wlv.logan.Main.HEIGHT_RATIO;
+import static wlv.logan.Main.WIDTH_RATIO;
+
 public class Rocket extends Point2D implements Printable {
     private final int angle; // from -90° to 90°
     private final int thrust; // from 0 to 4
@@ -57,8 +60,8 @@ public class Rocket extends Point2D implements Printable {
 
     public ImageView print() {
         ImageView imageView = new ImageView("wlv/logan/resources/rocket.png");
-        imageView.setX(getX() - 32d);
-        imageView.setY(getY() - 64d);
+        imageView.setX(getX() / WIDTH_RATIO - 32d);
+        imageView.setY(Math.abs(getY() - GamePane.MARS_HEIGHT) / HEIGHT_RATIO - 64d);
         imageView.setFitWidth(64d);
         imageView.setFitHeight(64d);
         imageView.setRotate(angle);

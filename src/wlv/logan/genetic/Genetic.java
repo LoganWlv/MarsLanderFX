@@ -1,12 +1,16 @@
 package wlv.logan.genetic;
 
+import javafx.scene.Node;
 import wlv.logan.GamePane;
 import wlv.logan.utils.GeneUtils;
+import wlv.logan.utils.RandomUtils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Random;
+import java.util.stream.Collectors;
+
+import static wlv.logan.utils.GeneUtils.randomGene;
 
 
 public class Genetic {
@@ -26,157 +30,144 @@ public class Genetic {
      */
 
     private final int POPULATION_SIZE = 100;
-    private final int NB_OF_GENES = 10;
+    private final int NB_OF_GENES = 40;
 
-    public int currentGeneration = 0;
+    public static List<Chromosome> population = null;
+    public static List<Node> displayedNodes = new ArrayList<>();
+    public static int currentGeneration = 0;
 
 
     public void genetic(GamePane gamePane) {
-        List<Chromosome> population = new ArrayList<>();
-        Random random = new Random();
+        if (null == population) {
+            initPopulation(gamePane);
+        }
 
         Double crossOverRatio = 0.75;
-        Double mutationRatio = 0.20;
+        Double mutationRatio = 0.50;
         Double elitismRatio = 0.5;
 
-        for (int i = 0; i < POPULATION_SIZE; i++) {
-            population.add(new Chromosome(GeneUtils.generateGenes(NB_OF_GENES), gamePane.getRocket()));
-        }
+        gamePane.getChildren().removeAll(displayedNodes);
 
-        for(Chromosome individual : population) {
-            gamePane.getChildren().addAll(individual.print());
-        }
+        for (int z = 0; z < 100; z++) {
+            System.out.println("Genetic process will start...");
 
-        System.out.println("Genetic process will start...");
-/*
-        while (true) {
             //Fitness scaling if you have negative value - shift every values (min = -20, add 20 to every values)
 
-            Double fitnessTotal = Arrays.stream(population).mapToDouble(chromosome -> chromosome.fitnessValue).sum();
+            Double fitnessTotal = population.stream().mapToDouble(chromosome -> chromosome.fitnessValue).sum();
 
             //normalize fitness value
-            Arrays.stream(population).forEach(chromosome -> chromosome.normalizedFitnessValue = chromosome.fitnessValue / fitnessTotal);
+            population.forEach(chromosome -> chromosome.normalizedFitnessValue = chromosome.fitnessValue / fitnessTotal);
 
             //sort by normalized fitness value
-            Arrays.sort(population, Comparator.comparing(chromosome -> chromosome.normalizedFitnessValue, Comparator.reverseOrder()));
+            population.sort(Comparator.comparing(chromosome -> chromosome.normalizedFitnessValue, Comparator.reverseOrder()));
 
             //compute cumulative fitness
-            for (int i = 0; i < population.length; i++) {
+            for (int i = 0; i < population.size(); i++) {
                 double cumulativeResult = 0;
-                for (int j = i; j < population.length; j++) {
-                    cumulativeResult = cumulativeResult + (population[j].fitnessValue / fitnessTotal);
+                for (int j = i; j < population.size(); j++) {
+                    cumulativeResult = cumulativeResult + (population.get(j).fitnessValue / fitnessTotal);
                 }
                 if (i == 0) {
-                    population[i].cumulativeFitnessValue = 1.0;
-                } else if (i == population.length - 1) {
-                    population[i].cumulativeFitnessValue = 0.0;
+                    population.get(i).cumulativeFitnessValue = 1.0;
+                } else if (i == population.size() - 1) {
+                    population.get(i).cumulativeFitnessValue = 0.0;
                 } else {
-                    population[i].cumulativeFitnessValue = cumulativeResult;
+                    population.get(i).cumulativeFitnessValue = cumulativeResult;
 
                 }
             }
 
-            Chromosome[] nextPopulation = new Chromosome[population.length];
+            List<Chromosome> nextPopulation = new ArrayList<>(population);
 
-            //elitism
-            for (int popCounter = 0; popCounter < 2; popCounter++) {
-                nextPopulation[popCounter] = copyChromosome(population[popCounter]);
-            }
-
-            for (int popCounter = 2; popCounter < nextPopulation.length -1; popCounter++) {
+            // ELITISM - we start at index 5 to keep the 5 best elements
+            for (int popCounter = 50; popCounter < population.size() - 1; popCounter++) {
 
                 //find two parents
                 int firstParentIndex = -1;
                 int secondParentIndex = -1;
-                Double selectR = Math.random();
-                for (int i = 0; i < population.length; i++) {
-                    if (selectR >= population[i].cumulativeFitnessValue) {
-                        if (firstParentIndex == -1) {
-                            firstParentIndex = i - 1;
-                        }
+                double selectR = Math.random();
+                for (int i = 0; i < population.size(); i++) {
+                    if (selectR >= population.get(i).cumulativeFitnessValue) {
+                        firstParentIndex = i - 1;
+                        break;
                     }
                 }
 
-                selectR = Math.random() ;
-                for (int i = 0; i < population.length; i++) {
-                    if (selectR >= population[i].cumulativeFitnessValue) {
-                        if (secondParentIndex == -1) {
-                            secondParentIndex = i - 1;
-                        }
+                selectR = Math.random();
+                for (int i = 0; i < population.size(); i++) {
+                    if (selectR >= population.get(i).cumulativeFitnessValue) {
+                        secondParentIndex = i - 1;
+                        break;
                     }
                 }
 
                 //cross over the 2 parents
-                Chromosome firstChild = copyChromosome(population[firstParentIndex]);
-                Chromosome secondChild = copyChromosome(population[secondParentIndex]);
+                Chromosome firstChild = population.get(firstParentIndex).copy();
+                Chromosome secondChild = population.get(secondParentIndex).copy();
+                List<Gene> firstChildGenes = new ArrayList<>();
+                List<Gene> secondChildGenes = new ArrayList<>();
+                for (int i = 0; i < NB_OF_GENES - 1; i++) {
 
-                int crossOverPointA = random.nextInt(firstChild.genes.length - 1);
-                int crossOverPointB = crossOverPointA;
+                    double firstRandom = RandomUtils.random(0, 1);
+                    double secondRandom = RandomUtils.random(0, 1);
 
-                while (crossOverPointA == crossOverPointB || crossOverPointA > crossOverPointB) {
-                    crossOverPointB = random.nextInt(firstChild.genes.length);
+                    int firstChildAngle = (int) (firstRandom * firstChild.genes.get(i).rotateAngle + (1 - firstRandom) * secondChild.genes.get(i).rotateAngle);
+                    int firstChildThrust = (int) (firstRandom * firstChild.genes.get(i).thrustPower + (1 - firstRandom) * secondChild.genes.get(i).thrustPower);
+
+                    int secondChildAngle = (int) ((1 - secondRandom) * firstChild.genes.get(i).rotateAngle + secondRandom * secondChild.genes.get(i).rotateAngle);
+                    int secondChildThrust = (int) ((1 - secondRandom) * firstChild.genes.get(i).thrustPower + secondRandom * secondChild.genes.get(i).thrustPower);
+
+                    firstChildGenes.add(new Gene(firstChildAngle, firstChildThrust));
+                    secondChildGenes.add(i, new Gene(secondChildAngle, secondChildThrust));
                 }
+                firstChild.updateGenes(firstChildGenes, gamePane.getRocket());
+                secondChild.updateGenes(secondChildGenes, gamePane.getRocket());
 
-                for (int i = crossOverPointA; i < crossOverPointB; i++) {
-                    firstChild.genes[i] = population[secondParentIndex].genes[i];
-                    secondChild.genes[i] = population[firstParentIndex].genes[i];
-                }
 
                 //cross over probability to know if parent or child survive
-                Double r1 = Math.random();
-                Double r2 = Math.random();
+                double r1 = Math.random();
+                double r2 = Math.random();
 
                 if (r1 <= crossOverRatio) {
-                    nextPopulation[popCounter] = firstChild;
+                    nextPopulation.set(popCounter, firstChild);
                 } else {
-                    nextPopulation[popCounter] = copyChromosome(population[firstParentIndex]);
+                    nextPopulation.set(popCounter, population.get(firstParentIndex).copy());
                 }
 
                 if (r2 <= crossOverRatio) {
-                    nextPopulation[popCounter + 1] = secondChild;
+                    nextPopulation.set(popCounter + 1, secondChild);
                 } else {
-                    nextPopulation[popCounter + 1] = copyChromosome(population[secondParentIndex]);
+                    nextPopulation.set(popCounter + 1, population.get(secondParentIndex).copy());
                 }
 
 
                 //mutation
-                for (int i = 0; i < nextPopulation[popCounter].genes.length; i++) {
-                    Double r = Math.random();
+                for (int i = 0; i < nextPopulation.get(popCounter).genes.size(); i++) {
+                    double r = Math.random();
                     if (r < mutationRatio) {
-                        nextPopulation[popCounter].genes[i] = (double) random.nextInt(10);
+                        nextPopulation.get(popCounter).genes.set(i, randomGene());
+                        nextPopulation.get(popCounter).updateGenes(nextPopulation.get(popCounter).genes, gamePane.getRocket());
                     }
                 }
-
-                for (int i = 0; i < nextPopulation[popCounter + 1].genes.length; i++) {
-                    Double r = Math.random();
-                    if (r < mutationRatio) {
-                        nextPopulation[popCounter + 1].genes[i] = (double) random.nextInt(10);
-                    }
-                }
-
-
             }
 
             System.out.println("**** END ****");
             population = nextPopulation;
-        }
-*/
-    }
-
-    public static Double fitness(Double[] genes) {
-        return Arrays.stream(genes).reduce(0.0, Double::sum);
-    }
-
-    public static Chromosome copyChromosome(Chromosome c) {
-       /* Double[] genes = new Double[c.genes.length];
-
-        for (int i = 0; i < genes.length; i++) {
-            genes[i] = c.genes[i];
+            currentGeneration++;
         }
 
-        Chromosome copied = new Chromosome<>(genes);
-        copied.fitnessValue = fitness(genes);
-        return copied;*/
-        return null;
+
+        displayedNodes = population.stream().map(Chromosome::print).collect(Collectors.toList());
+        System.out.println(displayedNodes.size());
+        gamePane.getChildren().addAll(displayedNodes);
+        gamePane.setButtonTooltip("Generation: " + currentGeneration);
+    }
+
+    public void initPopulation(GamePane gamePane) {
+        population = new ArrayList<>();
+
+        for (int i = 0; i < POPULATION_SIZE; i++) {
+            population.add(new Chromosome(GeneUtils.generateGenes(NB_OF_GENES), gamePane.getRocket()));
+        }
     }
 }
