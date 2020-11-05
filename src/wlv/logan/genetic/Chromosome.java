@@ -1,5 +1,6 @@
 package wlv.logan.genetic;
 
+import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.control.Tooltip;
 import javafx.scene.paint.Color;
@@ -15,8 +16,6 @@ import wlv.logan.utils.PhysicUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-import static wlv.logan.Main.HEIGHT_RATIO;
-import static wlv.logan.Main.WIDTH_RATIO;
 import static wlv.logan.MarsFloor.TEST_MAP;
 
 public class Chromosome implements Printable {
@@ -53,9 +52,11 @@ public class Chromosome implements Printable {
     private void fitness(int fuelLeft, int rotateAngle, double speedX, double speedY) {
         fitnessValue = 0d;
         Line winLine = GamePane.WINNING_AREA;
-        double targetX = (winLine.getStartX() * WIDTH_RATIO + winLine.getEndX() * WIDTH_RATIO) / 2;
-        double targetY =
-                (winLine.getStartY() * HEIGHT_RATIO + winLine.getEndY() * HEIGHT_RATIO) / 2;
+
+        Point2D crashPoint = PhysicUtils.getCrashPoint(points);
+
+        double targetX = (winLine.getStartX() + winLine.getEndX()) / 2;
+        double targetY = (winLine.getStartY() + winLine.getEndY()) / 2;
 
         double lastX = points[points.length - 2];
         double lastY = points[points.length - 1];
@@ -75,24 +76,31 @@ public class Chromosome implements Printable {
             fitnessValue += distanceScore;
         }
 
+
         if (rotateAngle == 0) {
             fitnessValue += 1d;
+        } else {
+            fitnessValue += (double) 1 / rotateAngle;
         }
 
         if (Math.abs(speedY) <= 40d) {
             fitnessValue += 1d;
+        } else {
+            fitnessValue += (double) 1 / speedY;
         }
 
         if (Math.abs(speedX) <= 20d) {
             fitnessValue += 1d;
+        } else {
+            fitnessValue += (double) 1 / speedX;
         }
 
         Polyline line = new Polyline(points);
         TEST_MAP.getFloors().forEach(losingFloor -> {
             if (line.getBoundsInParent().intersects(losingFloor.getBoundsInParent())) {
-                fitnessValue -= 1;
+                fitnessValue -= 0.25d;
             } else {
-                fitnessValue += 1;
+                fitnessValue += 0.5d;
             }
         });
     }

@@ -36,19 +36,18 @@ public class Genetic {
     public static List<Node> displayedNodes = new ArrayList<>();
     public static int currentGeneration = 0;
 
-
     public void genetic(GamePane gamePane) {
         if (null == population) {
             initPopulation(gamePane);
         }
 
-        Double crossOverRatio = 0.75;
-        Double mutationRatio = 0.50;
-        Double elitismRatio = 0.5;
+        double crossOverRatio = 0.75;
+        double mutationRatio = 0.50;
+        double elitismRatio = 0.5;
 
         gamePane.getChildren().removeAll(displayedNodes);
 
-        for (int z = 0; z < 100; z++) {
+        for (int z = 0; z < 1; z++) {
             System.out.println("Genetic process will start...");
 
             //Fitness scaling if you have negative value - shift every values (min = -20, add 20 to every values)

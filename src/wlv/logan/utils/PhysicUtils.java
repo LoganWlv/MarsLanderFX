@@ -1,5 +1,7 @@
 package wlv.logan.utils;
 
+import javafx.geometry.Point2D;
+import javafx.scene.shape.Line;
 import wlv.logan.GamePane;
 import wlv.logan.MarsFloor;
 import wlv.logan.Rocket;
@@ -12,9 +14,45 @@ import java.util.List;
 
 import static wlv.logan.Main.HEIGHT_RATIO;
 import static wlv.logan.Main.WIDTH_RATIO;
+import static wlv.logan.MarsFloor.TEST_MAP;
 
 public class PhysicUtils {
     private PhysicUtils() {
+    }
+
+    public static Point2D getCrashPoint(double[] points) {
+        for(int i = 0; i < points.length; i+=4) {
+            double x1 = points[i];
+            double y1 = points[i + 1];
+
+            double x2 = points[i + 2];
+            double y2 = points[i + 3];
+
+            double A = (y2 - y1) / (x2 - x1);
+            double B = y1 - A * x1;
+
+            for(Line losingFloor : TEST_MAP.getFloors()) {
+                double startX = losingFloor.getStartX();
+                double startY = losingFloor.getStartY();
+
+                double endX = losingFloor.getEndX();
+                double endY = losingFloor.getEndY();
+
+                double loseA = (endY - startY) / (endX - startX);
+                double loseB = startY - loseA * startX;
+
+                if(loseA == A) {
+                    return null;
+                }
+
+                double interX = (loseB - B) / (A - loseA);
+                double interY = A * interX + B;
+
+                return new Point2D(interX, interY);
+            }
+        }
+
+        return null;
     }
 
     public static RocketPath computeRocketPositions(Rocket rocket, Chromosome individual) {
