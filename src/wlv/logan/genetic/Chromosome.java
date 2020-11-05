@@ -17,8 +17,10 @@ import java.util.List;
 
 import static wlv.logan.Main.HEIGHT_RATIO;
 import static wlv.logan.Main.WIDTH_RATIO;
+import static wlv.logan.MarsFloor.TEST_MAP;
 
 public class Chromosome implements Printable {
+
     public List<Gene> genes;
     public Double fitnessValue = 0d;
     public Double normalizedFitnessValue;
@@ -33,10 +35,12 @@ public class Chromosome implements Printable {
         points = rocketPath.path;
         angle = rocketPath.lastAngle;
         fuel = rocketPath.lastFuel;
-        fitness(rocketPath.lastFuel, rocketPath.lastAngle, rocketPath.lastSpeedX, rocketPath.lastSpeedY);
+        fitness(rocketPath.lastFuel, rocketPath.lastAngle, rocketPath.lastSpeedX,
+                rocketPath.lastSpeedY);
     }
 
-    private Chromosome(List<Gene> genes, Double fitnessValue, Double normalizedFitnessValue, Double cumulativeFitnessValue, double[] points, int angle, int fuel) {
+    private Chromosome(List<Gene> genes, Double fitnessValue, Double normalizedFitnessValue,
+            Double cumulativeFitnessValue, double[] points, int angle, int fuel) {
         this.genes = genes;
         this.fitnessValue = fitnessValue;
         this.normalizedFitnessValue = normalizedFitnessValue;
@@ -47,9 +51,11 @@ public class Chromosome implements Printable {
     }
 
     private void fitness(int fuelLeft, int rotateAngle, double speedX, double speedY) {
+        fitnessValue = 0d;
         Line winLine = GamePane.WINNING_AREA;
         double targetX = (winLine.getStartX() * WIDTH_RATIO + winLine.getEndX() * WIDTH_RATIO) / 2;
-        double targetY = (winLine.getStartY() * HEIGHT_RATIO + winLine.getEndY() * HEIGHT_RATIO) / 2;
+        double targetY =
+                (winLine.getStartY() * HEIGHT_RATIO + winLine.getEndY() * HEIGHT_RATIO) / 2;
 
         double lastX = points[points.length - 2];
         double lastY = points[points.length - 1];
@@ -70,16 +76,25 @@ public class Chromosome implements Printable {
         }
 
         if (rotateAngle == 0) {
-            fitnessValue += 50d;
+            fitnessValue += 1d;
         }
 
         if (Math.abs(speedY) <= 40d) {
-            fitnessValue += 40d;
+            fitnessValue += 1d;
         }
 
         if (Math.abs(speedX) <= 20d) {
-            fitnessValue += 40d;
+            fitnessValue += 1d;
         }
+
+        Polyline line = new Polyline(points);
+        TEST_MAP.getFloors().forEach(losingFloor -> {
+            if (line.getBoundsInParent().intersects(losingFloor.getBoundsInParent())) {
+                fitnessValue -= 1;
+            } else {
+                fitnessValue += 1;
+            }
+        });
     }
 
     @Override
@@ -87,7 +102,9 @@ public class Chromosome implements Printable {
         Polyline line = new Polyline(points);
         line.setStroke(Color.GREENYELLOW);
 
-        Tooltip tooltip = new Tooltip("end X: " + getEndX() + "\nend Y: " + getEndY() + "\nangle: " + angle + "\nfitness: " + fitnessValue);
+        Tooltip tooltip = new Tooltip(
+                "end X: " + getEndX() + "\nend Y: " + getEndY() + "\nangle: " + angle
+                        + "\nfitness: " + fitnessValue);
         tooltip.setShowDelay(Duration.ZERO);
 
         Tooltip.install(line, tooltip);
@@ -108,12 +125,14 @@ public class Chromosome implements Printable {
         this.points = rocketPath.path;
         this.angle = rocketPath.lastAngle;
         this.fuel = rocketPath.lastFuel;
-        fitness(rocketPath.lastFuel, rocketPath.lastAngle, rocketPath.lastSpeedX, rocketPath.lastSpeedY);
+        fitness(rocketPath.lastFuel, rocketPath.lastAngle, rocketPath.lastSpeedX,
+                rocketPath.lastSpeedY);
     }
 
     public Chromosome copy() {
         return new Chromosome(
-                new ArrayList<>(genes), fitnessValue, normalizedFitnessValue, cumulativeFitnessValue, points, angle, fuel
+                new ArrayList<>(genes), fitnessValue, normalizedFitnessValue,
+                cumulativeFitnessValue, points, angle, fuel
         );
     }
 

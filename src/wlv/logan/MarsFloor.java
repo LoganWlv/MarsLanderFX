@@ -44,8 +44,14 @@ public class MarsFloor {
         return Collections.unmodifiableList(floors);
     }
 
+    public List<Line> getLosingFloors() {
+        return Collections.unmodifiableList(losingFloors);
+    }
+
     private static Line createFloorLine(double startX, double startY, double endX, double endY) {
-        Tooltip tooltip = new Tooltip("start X: " + startX + "\nstart Y: " + startY + "\nend X: " + endX + "\nend Y: "+ endY);
+        Tooltip tooltip = new Tooltip(
+                "start X: " + startX + "\nstart Y: " + startY + "\nend X: " + endX + "\nend Y: "
+                        + endY);
         tooltip.setShowDelay(Duration.ZERO);
         Line line = new Line(startX, startY, endX, endY);
         line.setStrokeWidth(2d);
