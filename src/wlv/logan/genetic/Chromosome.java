@@ -1,22 +1,18 @@
 package wlv.logan.genetic;
 
-import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.control.Tooltip;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Polyline;
 import javafx.util.Duration;
-import wlv.logan.GamePane;
-import wlv.logan.Printable;
-import wlv.logan.Rocket;
-import wlv.logan.RocketPath;
+import wlv.logan.*;
 import wlv.logan.utils.PhysicUtils;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
-
-import static wlv.logan.MarsFloor.TEST_MAP;
 
 public class Chromosome implements Printable {
 
@@ -25,6 +21,7 @@ public class Chromosome implements Printable {
     public Double normalizedFitnessValue;
     public Double cumulativeFitnessValue;
     private double[] points;
+    private final CrashPoint crashPoint;
     private int angle;
     private int fuel;
 
@@ -32,6 +29,7 @@ public class Chromosome implements Printable {
         this.genes = genes;
         RocketPath rocketPath = PhysicUtils.computeRocketPositions(rocket, this);
         points = rocketPath.path;
+        crashPoint = PhysicUtils.getCrashPoint(points);
         angle = rocketPath.lastAngle;
         fuel = rocketPath.lastFuel;
         fitness(rocketPath.lastFuel, rocketPath.lastAngle, rocketPath.lastSpeedX,
@@ -39,7 +37,7 @@ public class Chromosome implements Printable {
     }
 
     private Chromosome(List<Gene> genes, Double fitnessValue, Double normalizedFitnessValue,
-            Double cumulativeFitnessValue, double[] points, int angle, int fuel) {
+                       Double cumulativeFitnessValue, double[] points, int angle, int fuel, CrashPoint crashPoint) {
         this.genes = genes;
         this.fitnessValue = fitnessValue;
         this.normalizedFitnessValue = normalizedFitnessValue;
@@ -47,13 +45,12 @@ public class Chromosome implements Printable {
         this.points = points;
         this.angle = angle;
         this.fuel = fuel;
+        this.crashPoint = crashPoint;
     }
 
     private void fitness(int fuelLeft, int rotateAngle, double speedX, double speedY) {
         fitnessValue = 0d;
         Line winLine = GamePane.WINNING_AREA;
-
-        Point2D crashPoint = PhysicUtils.getCrashPoint(points);
 
         double targetX = (winLine.getStartX() + winLine.getEndX()) / 2;
         double targetY = (winLine.getStartY() + winLine.getEndY()) / 2;
@@ -63,6 +60,12 @@ public class Chromosome implements Printable {
 
         double xDiff = targetX - lastX;
         double yDiff = targetY - lastY;
+
+        if (null != crashPoint) {
+            xDiff = targetX - crashPoint.point.getX();
+            yDiff = targetY - crashPoint.point.getY();
+        }
+
         double distance = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
 
         if (distance == 0f) {
@@ -75,45 +78,36 @@ public class Chromosome implements Printable {
             }
             fitnessValue += distanceScore;
         }
-
-
-        if (rotateAngle == 0) {
-            fitnessValue += 1d;
-        } else {
-            fitnessValue += (double) 1 / rotateAngle;
-        }
-
-        if (Math.abs(speedY) <= 40d) {
-            fitnessValue += 1d;
-        } else {
-            fitnessValue += (double) 1 / speedY;
-        }
-
-        if (Math.abs(speedX) <= 20d) {
-            fitnessValue += 1d;
-        } else {
-            fitnessValue += (double) 1 / speedX;
-        }
-
-        Polyline line = new Polyline(points);
-        TEST_MAP.getFloors().forEach(losingFloor -> {
-            if (line.getBoundsInParent().intersects(losingFloor.getBoundsInParent())) {
-                fitnessValue -= 0.25d;
-            } else {
-                fitnessValue += 0.5d;
-            }
-        });
     }
 
     @Override
     public Node print() {
-        Polyline line = new Polyline(points);
+        double[] pointsToPrint;
+
+        if (crashPoint != null) {
+            pointsToPrint = new double[crashPoint.crashIndex + 1];
+            System.arraycopy(points, 0, pointsToPrint, 0, pointsToPrint.length);
+        } else {
+            pointsToPrint = points;
+        }
+
+
+        Polyline line = new Polyline(pointsToPrint);
+        line.setStrokeWidth(2d);
         line.setStroke(Color.GREENYELLOW);
+
+        DecimalFormat df = new DecimalFormat("#.#");
+        String crashPointMsg = this.crashPoint == null ? "\nRocket did not crash 🚀" : "\ncrash point: " + df.format(this.crashPoint.point.getX()) + " " + df.format(this.crashPoint.point.getY());
 
         Tooltip tooltip = new Tooltip(
                 "end X: " + getEndX() + "\nend Y: " + getEndY() + "\nangle: " + angle
-                        + "\nfitness: " + fitnessValue);
+                        + "\nfitness: " + fitnessValue + crashPointMsg);
         tooltip.setShowDelay(Duration.ZERO);
+
+        line.addEventHandler(MouseEvent.MOUSE_ENTERED, mouseEvent -> {
+            tooltip.setText("end X: " + getEndX() + "\nend Y: " + getEndY() + "\nangle: " + angle
+                    + "\nfitness: " + fitnessValue + crashPointMsg + " \nx: " + mouseEvent.getX() + "\ny: " + mouseEvent.getY());
+        });
 
         Tooltip.install(line, tooltip);
         return line;
@@ -140,7 +134,7 @@ public class Chromosome implements Printable {
     public Chromosome copy() {
         return new Chromosome(
                 new ArrayList<>(genes), fitnessValue, normalizedFitnessValue,
-                cumulativeFitnessValue, points, angle, fuel
+                cumulativeFitnessValue, points, angle, fuel, crashPoint
         );
     }
 

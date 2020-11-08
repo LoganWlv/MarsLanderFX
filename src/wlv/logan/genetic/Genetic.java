@@ -29,7 +29,7 @@ public class Genetic {
      * @param <T>
      */
 
-    private final int POPULATION_SIZE = 100;
+    private final int POPULATION_SIZE = 50;
     private final int NB_OF_GENES = 40;
 
     public static List<Chromosome> population = null;
@@ -79,7 +79,7 @@ public class Genetic {
             List<Chromosome> nextPopulation = new ArrayList<>(population);
 
             // ELITISM - we start at index 5 to keep the 5 best elements
-            for (int popCounter = 50; popCounter < population.size() - 1; popCounter++) {
+            for (int popCounter = 25; popCounter < population.size() - 1; popCounter++) {
 
                 //find two parents
                 int firstParentIndex = -1;

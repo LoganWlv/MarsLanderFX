@@ -1,6 +1,7 @@
 package wlv.logan;
 
 import javafx.scene.control.Tooltip;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.util.Duration;
@@ -57,6 +58,11 @@ public class MarsFloor {
         line.setStrokeWidth(2d);
         Tooltip.install(line, tooltip);
         line.setStroke(Color.RED);
+
+        line.addEventHandler(MouseEvent.MOUSE_ENTERED, mouseEvent -> {
+            tooltip.setText("x: " + mouseEvent.getX() + ", y: " + mouseEvent.getY());
+        });
+
         return line;
     }
 }
