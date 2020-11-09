@@ -21,7 +21,7 @@ public class Chromosome implements Printable {
     public Double normalizedFitnessValue;
     public Double cumulativeFitnessValue;
     private double[] points;
-    private final CrashPoint crashPoint;
+    private CrashPoint crashPoint;
     private int angle;
     private int fuel;
 
@@ -97,16 +97,20 @@ public class Chromosome implements Printable {
         line.setStroke(Color.GREENYELLOW);
 
         DecimalFormat df = new DecimalFormat("#.#");
-        String crashPointMsg = this.crashPoint == null ? "\nRocket did not crash 🚀" : "\ncrash point: " + df.format(this.crashPoint.point.getX()) + " " + df.format(this.crashPoint.point.getY());
-
+        String crashPointMsg = this.crashPoint == null ? "\nRocket did not crash 🚀" : "\ncrash point: " + df.format(this.crashPoint.point.getX()) + " " + df.format(this.crashPoint.point.getY()) + " " + this.crashPoint.type.name() + "\n" + crashPoint.debugCrashInfo();
         Tooltip tooltip = new Tooltip(
                 "end X: " + getEndX() + "\nend Y: " + getEndY() + "\nangle: " + angle
                         + "\nfitness: " + fitnessValue + crashPointMsg);
         tooltip.setShowDelay(Duration.ZERO);
+        tooltip.setHideDelay(Duration.INDEFINITE);
 
         line.addEventHandler(MouseEvent.MOUSE_ENTERED, mouseEvent -> {
             tooltip.setText("end X: " + getEndX() + "\nend Y: " + getEndY() + "\nangle: " + angle
                     + "\nfitness: " + fitnessValue + crashPointMsg + " \nx: " + mouseEvent.getX() + "\ny: " + mouseEvent.getY());
+        });
+
+        line.addEventHandler(MouseEvent.MOUSE_CLICKED, mouseEvent -> {
+           PhysicUtils.getCrashPoint(points);
         });
 
         Tooltip.install(line, tooltip);
@@ -125,6 +129,7 @@ public class Chromosome implements Printable {
         this.genes = genes;
         RocketPath rocketPath = PhysicUtils.computeRocketPositions(rocket, this);
         this.points = rocketPath.path;
+        this.crashPoint = PhysicUtils.getCrashPoint(rocketPath.path);
         this.angle = rocketPath.lastAngle;
         this.fuel = rocketPath.lastFuel;
         fitness(rocketPath.lastFuel, rocketPath.lastAngle, rocketPath.lastSpeedX,

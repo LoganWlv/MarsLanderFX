@@ -47,7 +47,7 @@ public class Genetic {
 
         gamePane.getChildren().removeAll(displayedNodes);
 
-        for (int z = 0; z < 1; z++) {
+        for (int z = 0; z < 50; z++) {
             System.out.println("Genetic process will start...");
 
             //Fitness scaling if you have negative value - shift every values (min = -20, add 20 to every values)

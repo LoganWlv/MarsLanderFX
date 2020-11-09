@@ -9,8 +9,7 @@ import wlv.logan.genetic.Gene;
 import java.util.ArrayList;
 import java.util.List;
 
-import static wlv.logan.Main.HEIGHT_RATIO;
-import static wlv.logan.Main.WIDTH_RATIO;
+import static wlv.logan.Main.*;
 import static wlv.logan.MarsFloor.TEST_MAP;
 
 public class PhysicUtils {
@@ -18,12 +17,12 @@ public class PhysicUtils {
     }
 
     public static CrashPoint getCrashPoint(double[] points) {
-        for (int i = 0; i < points.length; i += 4) {
+        for (int i = 0; i < points.length - 2; i += 2) {
             double x1 = points[i];
-            double y1 = points[i + 1];
+            double y1 = transformY(points[i + 1]);
 
             double x2 = points[i + 2];
-            double y2 = points[i + 3];
+            double y2 = transformY(points[i + 3]);
 
             boolean isVertical = x2 == x1;
             boolean isHorizontal = y2 == y1;
@@ -33,86 +32,83 @@ public class PhysicUtils {
 
             for (Line losingFloor : TEST_MAP.getFloors()) {
                 double startX = losingFloor.getStartX();
-                double startY = losingFloor.getStartY();
+                double startY = transformY(losingFloor.getStartY());
 
                 double endX = losingFloor.getEndX();
-                double endY = losingFloor.getEndY();
+                double endY = transformY(losingFloor.getEndY());
 
                 boolean isLosingFloorVertical = startX == endX;
-                boolean isLosingFloorHorizontal = startX == endY;
+                boolean isLosingFloorHorizontal = startY == endY;
 
                 if (isLosingFloorVertical) {
                     if (isVertical && x1 == startX) { // same vertical
                         if (y2 <= startY && y2 >= endY) {
-                            return new CrashPoint(new Point2D(x1, endY), i);
+                            return new CrashPoint(new Point2D(x1, endY), i + 3, CrashType.V_x_V, x1, y1, x2, y2, Double.NaN, Double.NaN, startX, startY, endX, endY, Double.NaN, Double.NaN);
                         } else if (y2 >= startY && y2 <= endY) {
-                            return new CrashPoint(new Point2D(x1, startY), i);
+                            return new CrashPoint(new Point2D(x1, startY), i + 3, CrashType.V_x_V, x1, y1, x2, y2, Double.NaN, Double.NaN, startX, startY, endX, endY, Double.NaN, Double.NaN);
                         }
                     } else if (isHorizontal) {
-                        if ((y2 <= startY && y2 >= endY) || (y2 >= startY && y2 <= endY)) {
-                            return new CrashPoint(new Point2D(startX, y2), i);
+                        if (((startX <= x2 && x1 >= startX) || (x2 >= startX && x1 <= startX)) &&
+                                ((y1 <= startY && endY >= y1) || (startX >= y1 && y1 <= endX))) {
+                            return new CrashPoint(new Point2D(startX, y2), i + 3, CrashType.V_x_H, x1, y1, x2, y2, Double.NaN, Double.NaN, startX, startY, endX, endY, Double.NaN, Double.NaN);
                         }
                     } else {
-                        double interY = A * x2 + B;
-                        if ((interY <= endY && interY >= startY) || (interY >= endY && interY <= startY)) {
-                            return new CrashPoint(new Point2D(endX, interY), i);
+                        double interY = A * startX + B;
+                        if (((interY <= y2 && interY >= y1) || (interY >= y2 && interY <= y1)) &&
+                                ((interY <= endY && interY >= startY) || (interY >= endY && interY <= startY))) {
+                            return new CrashPoint(new Point2D(endX, interY), i + 3, CrashType.V_x_A, x1, y1, x2, y2, A, B, startX, startY, endX, endY, Double.NaN, Double.NaN);
                         }
                     }
-                }
-
-                if (isLosingFloorHorizontal) {
+                } else if (isLosingFloorHorizontal) {
                     if (isHorizontal && y1 == startY) { // same horizontal
                         if (x2 <= startX && x2 >= endX) {
-                            return new CrashPoint(new Point2D(endX, y2), i);
+                            return new CrashPoint(new Point2D(endX, y2), i + 3, CrashType.H_x_H, x1, y1, x2, y2, Double.NaN, Double.NaN, startX, startY, endX, endY, Double.NaN, Double.NaN);
                         } else if (y2 >= startX && y2 <= endX) {
-                            return new CrashPoint(new Point2D(startX, y2), i);
+                            return new CrashPoint(new Point2D(startX, y2), i + 3, CrashType.H_x_H, x1, y1, x2, y2, Double.NaN, Double.NaN, startX, startY, endX, endY, Double.NaN, Double.NaN);
                         }
                     } else if (isVertical) {
-                        if ((x2 <= startX && x2 >= endX) || (x2 >= startX && x2 <= endX)) {
-                            return new CrashPoint(new Point2D(x2, endY), i);
+                        if (((startY <= y2 && startY >= y1) || (startY >= y2 && startY <= y1)) &&
+                                ((x1 <= startX && x1 >= endX) || (x1 >= startX && x1 <= endX))) {
+                            return new CrashPoint(new Point2D(x2, endY), i + 3, CrashType.H_x_V, x1, y1, x2, y2, Double.NaN, Double.NaN, startX, startY, endX, endY, Double.NaN, Double.NaN);
                         }
                     } else {
-                        double interX = (y2 - B) / A;
-                        if ((interX <= endX && interX >= startX) || (interX >= endX && interX <= startX)) {
-                            return new CrashPoint(new Point2D(interX, endY), i);
+                        double interX = (startY - B) / A;
+                        if (((interX <= x2 && interX >= x1) || (interX >= x2 && interX <= x1)) &&
+                                ((interX <= startX && interX >= endX) || (interX >= startX && interX <= endX))) {
+                            return new CrashPoint(new Point2D(interX, endY), i + 3, CrashType.H_x_A, x1, y1, x2, y2, A, B, startX, startY, endX, endY, Double.NaN, Double.NaN);
                         }
-                    }
-                }
-
-                double loseA = (endY - startY) / (endX - startX);
-                double loseB = startY - loseA * startX;
-
-                if (isVertical) {
-                    double interY = loseA * x2 + loseB;
-                    if ((interY <= y2 && interY >= y1) || (interY >= y2 && interY <= y1)) {
-                        return new CrashPoint(new Point2D(x2, interY), i);
-                    }
-                } else if (isHorizontal) {
-                    double interX = (y2 - loseB) / loseA;
-                    if ((interX <= x2 && interX >= x1) || (interX >= x2 && interX <= x1)) {
-                        return new CrashPoint(new Point2D(interX, y2), i);
                     }
                 } else {
-                    if (loseA == A) {
-                        if (loseB == B) {
-                            if (x2 <= startX && x2 >= endX) {
-                                return new CrashPoint(new Point2D(startX, startY), i);
-                            } else if (x2 >= startX && x2 <= endX) {
-                                return new CrashPoint(new Point2D(endX, endY), i);
-                            }
+                    double loseA = (endY - startY) / (endX - startX);
+                    double loseB = startY - loseA * startX;
+
+                    if (isVertical) {
+                        double interY = loseA * x2 + loseB;
+                        if ((interY <= y2 && interY >= y1) || (interY >= y2 && interY <= y1)) {
+                            return new CrashPoint(new Point2D(x2, interY), i + 3, CrashType.A_x_V, x1, y1, x2, y2, Double.NaN, Double.NaN, startX, startY, endX, endY, loseA, loseB);
                         }
-                    }
-
-                    double interX = (loseB - B) / (A - loseA);
-                    double interY = A * interX + B;
-
-                    if (x1 < x2) {
-                        if (interX > x1 && interX < x2) {
-                            return new CrashPoint(new Point2D(interX, interY), i);
+                    } else if (isHorizontal) {
+                        double interX = (y2 - loseB) / loseA;
+                        if ((interX <= x2 && interX >= x1) || (interX >= x2 && interX <= x1)) {
+                            return new CrashPoint(new Point2D(interX, y2), i + 3, CrashType.A_x_H, x1, y1, x2, y2, Double.NaN, Double.NaN, startX, startY, endX, endY, loseA, loseB);
                         }
                     } else {
-                        if (interX < x1 && interX > x2) {
-                            return new CrashPoint(new Point2D(interX, interY), i);
+                        if (loseA == A) {
+                            if (loseB == B) {
+                                if (x2 <= startX && x2 >= endX) {
+                                    return new CrashPoint(new Point2D(startX, startY), i + 3, CrashType.SAME, x1, y1, x2, y2, A, B, startX, startY, endX, endY, loseA, loseB);
+                                } else if (x2 >= startX && x2 <= endX) {
+                                    return new CrashPoint(new Point2D(endX, endY), i + 3, CrashType.SAME, x1, y1, x2, y2, A, B, startX, startY, endX, endY, loseA, loseB);
+                                }
+                            }
+                        }
+
+                        double interX = (loseB - B) / (A - loseA);
+                        double interY = A * interX + B;
+
+                        if (((interX >= x1 && interX <= x2) || (interX <= x1 && interX >= x2)) &&
+                                ((interX >= startX && interX <= endX) || (interX <= startX && interX >= endX))) {
+                            return new CrashPoint(new Point2D(interX, interY), i + 3, CrashType.A_x_A, x1, y1, x2, y2, A, B, startX, startY, endX, endY, loseA, loseB);
                         }
                     }
                 }
@@ -184,5 +180,9 @@ public class PhysicUtils {
         } else {
             return nextThrust;
         }
+    }
+
+    private static double transformY(double y) {
+        return 800 - y;
     }
 }
